@@ -8,14 +8,22 @@ import time
 from datetime import datetime
 from dotenv import load_dotenv
 from pathlib import Path
+import os
+
+url_signin = "https://inscription.ymcaquebec.org/MyAccount/MyAccountUserLogin.asp?Referrer=&amp;AjaxRequest=true"
+url_booking = "https://inscription.ymcaquebec.org/Facilities/FacilitiesSearchWizard.asp"
+working_days = ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+
+load_dotenv(verbose=True)
 
 class AutomateBooking:
 
-    def __init__(self, path_binary: str):
+    def __init__(self):
         """
         :param path_binary: Binary to either Chrome self.driver or Firefox.
         """
-        self.path_binary = Path(path_binary)
+
+        self.path_binary = Path(os.getenv("browser_path"))
         assert self.path_binary.exists()
 
         # Get the current date information:
@@ -28,14 +36,14 @@ class AutomateBooking:
         self.today_weekDay = self.today.strftime('%A')
 
         # Data check.
-        if self.today_weekDay not in ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]:
+        if self.today_weekDay not in working_days:
             print("This app only runs between Tuesday and Saturday to grab the first spot of YMCA courts.")
             return
 
         self.driver: webdriver = None
-        if "firefox" in path_binary.lower():
+        if "firefox" in str(self.path_binary).lower():
             self.PrepareFirefoxDriver()
-        elif "chrome" in path_binary.lower():
+        elif "chrome" in str(self.path_binary).lower():
             self.PrepareChromeDriver()
         else:
             raise ValueError("Binary path does not contain firefox OR Chrome!")
@@ -69,10 +77,10 @@ class AutomateBooking:
         """
         Run the sign in operation.
         """
-        self.driver.get("https://inscription.ymcaquebec.org/MyAccount/MyAccountUserLogin.asp?Referrer=&amp;AjaxRequest=true")
+        self.driver.get(url_signin)
 
-        str_barcode = load_dotenv("barcode")
-        str_PINID = load_dotenv("PINID")
+        str_barcode = os.getenv("barcode")
+        str_PINID = os.getenv("PINID")
         ## sign in
         from selenium.common.exceptions import NoSuchElementException
         try:
@@ -207,7 +215,7 @@ class AutomateBooking:
         Core function to initiate the search with the proper criteria to generate the list of table availability
         """
 
-        self.driver.get("https://inscription.ymcaquebec.org/Facilities/FacilitiesSearchWizard.asp")
+        self.driver.get(url_booking)
         time.sleep(5)  ## to get for loaded completly
 
         self.Select_BookingSearch()
@@ -264,4 +272,4 @@ class AutomateBooking:
         self.driver.find_element_by_id('AddBookTop').click()
 
 if __name__=="__main__":
-    testBooking = AutomateBooking(r'C:\Program Files\Mozilla Firefox\firefox.exe')
+    testBooking = AutomateBooking()
