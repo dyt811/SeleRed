@@ -1,5 +1,6 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver import Firefox
+from selenium.webdriver.firefox.options import Options
 
 from selenium.common.exceptions import StaleElementReferenceException
 from bs4 import BeautifulSoup
@@ -48,13 +49,15 @@ class AutomateBooking:
             return
 
         self.driver: webdriver = None
-        if "firefox" in str(self.path_binary).lower():
+        if "TRAVIS" in os.environ:
+            self.PrepareTravisFireFoxDriver()
+        elif "firefox" in str(self.path_binary).lower():
             self.PrepareFirefoxDriver()
         elif "chrome" in str(self.path_binary).lower():
             self.PrepareChromeDriver()
         else:
             raise ValueError("Binary path does not contain firefox OR Chrome!")
-
+        
         self.driver.maximize_window()
         self.SignIn()
         self.InitiateSearch()
@@ -81,13 +84,20 @@ class AutomateBooking:
         logger.info("Completed the transaction!")
         time.sleep(3)
 
+    def PrepareTravisFireFoxDriver(self):
+        options = Options
+        options.add_argument('-headless')
+        self.driver = Firefox(firefox_options=options)
+
     def PrepareChromeDriver(self):
         """
         Create a Chrome Session
         :param path_ChromeBinary:
         :return:
         """
+        logger.info(self.path_binary)
         self.driver = webdriver.Chrome(self.path_binary)  # path to chromedriver
+
         time.sleep(5)
 
     def PrepareFirefoxDriver(self):

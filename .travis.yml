@@ -2,7 +2,11 @@ language: python
 
 python:
   - "3.7"
-
+env:
+  global:
+    - MOZ_HEADLESS=1
+addons:
+  firefox: latest
 # command to install dependencies
 install:
   - sudo apt-get update
