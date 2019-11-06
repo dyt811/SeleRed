@@ -32,7 +32,7 @@ class AutomateBooking:
             self.path_binary = Path(r"/usr/lib/chromium-browser/chromedriver")
         else:
             self.path_binary = Path(os.getenv("browser_path"))
-        assert self.path_binary.exists()
+            assert self.path_binary.exists()
 
         # Get the current date information:
         self.today = datetime.today()
