@@ -85,7 +85,7 @@ class AutomateBooking:
         time.sleep(3)
 
     def PrepareTravisFireFoxDriver(self):
-        options = Options
+        options = Options()
         options.add_argument('-headless')
         self.driver = Firefox(firefox_options=options)
 

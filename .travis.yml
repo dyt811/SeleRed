@@ -10,7 +10,6 @@ addons:
 # command to install dependencies
 install:
   - sudo apt-get update
-  - sudo apt-get install chromium-chromedriver
   - pip install -r requirements.txt
   - export PATH=$PATH:$(pwd)
   - export PATH=$PATH:/usr/lib/chromium-browser/
