@@ -9,12 +9,15 @@ from datetime import datetime
 from dotenv import load_dotenv
 from pathlib import Path
 import os
+import logging
 
 url_signin = "https://inscription.ymcaquebec.org/MyAccount/MyAccountUserLogin.asp?Referrer=&amp;AjaxRequest=true"
 url_booking = "https://inscription.ymcaquebec.org/Facilities/FacilitiesSearchWizard.asp"
 working_days = ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 load_dotenv(verbose=True)
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO)
 
 class AutomateBooking:
 
@@ -22,8 +25,12 @@ class AutomateBooking:
         """
         :param path_binary: Binary to either Chrome self.driver or Firefox.
         """
-
-        self.path_binary = Path(os.getenv("browser_path"))
+        logger.debug("Main program path begings.")
+        # If on travis, .travis.yml already took care of the dependency.
+        if "TRAVIS" in os.environ:
+            self.path_binary = Path(r"/usr/lib/chromium-browser/chromedriver")
+        else:
+            self.path_binary = Path(os.getenv("browser_path"))
         assert self.path_binary.exists()
 
         # Get the current date information:
@@ -53,14 +60,25 @@ class AutomateBooking:
         self.InitiateSearch()
         self.ProcessResults()
         self.GoToCheckOut()
-        self.CompleteTransaction()
+        book = int(os.getenv("CompleteTransaction"))
+
+        if book == 1:
+            self.CompleteTransaction()
+        elif book == 0:
+            logger.info("Mock completing transaction for debugging purposes!")
+        else:
+            logger.critical("Unreachable code detected. OS ENV variable CompleteTransaction may not have been set in the TravisCI test environment, or the HerokuApplication.")
+
+        logger.debug("Main program path end reached.")
 
     def GoToCheckOut(self):
         self.driver.find_element_by_xpath('//*[@title="Click to Checkout"]').click()
+        logger.info("Clicked on Checkout!")
         time.sleep(3)
 
     def CompleteTransaction(self):
         self.driver.find_element_by_id("completeTransactionButton").click()
+        logger.info("Completed the transaction!")
         time.sleep(3)
 
     def PrepareChromeDriver(self):
@@ -102,6 +120,7 @@ class AutomateBooking:
 
             login_submit_button = self.driver.find_element_by_id('Enter')
             login_submit_button.submit()
+            logger.info("Sign in action complete!")
 
         except NoSuchElementException:
             raise (TimeoutError("It seems the YMCA website might be DOWN"))
@@ -239,7 +258,8 @@ class AutomateBooking:
             self.Select_Saturday()
             self.Select_SaturdayTime()
         self.driver.find_element_by_name("Form_Criteria_Panel").submit()
-        time.sleep(10)
+        logger.info("Search action complete!")
+        time.sleep(3)
 
     def ProcessResults(self):
         """
@@ -250,6 +270,10 @@ class AutomateBooking:
         soup = BeautifulSoup(content, "html.parser")
 
         table = soup.find('table', attrs={'id': 'fac-search-results'})
+        if table is None:
+            raise PermissionError("It seems there are no known court availabilities. All courts might have been booked!! How?")
+
+
         table_body = table.find('tbody')
 
         rows = table_body.find_all('tr')
@@ -262,10 +286,13 @@ class AutomateBooking:
                 if (cols[2].find(text=True) == 'Thu' and cols[4].find(text=True) == '21:10-22:10'):
                     thursdayCourt = cols[6].find('input').get('name')
                     break
-            print(thursdayCourt)
+            logger.info(thursdayCourt)
+            logger.info("Thursday search complete!")
             if (thursdayCourt != ''):
                 select_court = self.driver.find_element_by_id(thursdayCourt)
                 select_court.click()
+
+
         elif self.today_weekDay in ["Thursday", "Friday"]:
             saturdayCourt = ''
             # Saturday row Count
@@ -275,11 +302,14 @@ class AutomateBooking:
                     saturdayCourt = cols[6].find('input').get('name')
                     break
             print(saturdayCourt)
+            logger.info("Saturday search complete!")
             if (saturdayCourt != ''):
                 select_court = self.driver.find_element_by_id(saturdayCourt)
                 select_court.click()
+
         time.sleep(5)
         self.driver.find_element_by_id('AddBookTop').click()
+        logger.info("Add booking to card complete!")
         time.sleep(5)
 
 if __name__=="__main__":
