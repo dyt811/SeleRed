@@ -52,6 +52,16 @@ class AutomateBooking:
         self.SignIn()
         self.InitiateSearch()
         self.ProcessResults()
+        self.GoToCheckOut()
+        self.CompleteTransaction()
+
+    def GoToCheckOut(self):
+        self.driver.find_element_by_xpath('//*[@title="Click to Checkout"]').click()
+        time.sleep(3)
+
+    def CompleteTransaction(self):
+        self.driver.find_element_by_id("completeTransactionButton").click()
+        time.sleep(3)
 
     def PrepareChromeDriver(self):
         """
@@ -270,6 +280,7 @@ class AutomateBooking:
                 select_court.click()
         time.sleep(5)
         self.driver.find_element_by_id('AddBookTop').click()
+        time.sleep(5)
 
 if __name__=="__main__":
     testBooking = AutomateBooking()
