@@ -8,11 +8,17 @@ env:
 addons:
   firefox: latest
 # command to install dependencies
+before_install:
+  - sudo apt-get install xvfb
+  - wget https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-linux64.tar.gz
 install:
-  - sudo apt-get update
+  - sudo tar -xzf geckodriver-v0.19.0-linux64.tar.gz -C /usr/bin
+  - sudo chmod a+x /usr/bin/geckodriver
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - sleep 5 # give xvfb some time to start
   - pip install -r requirements.txt
   - export PATH=$PATH:$(pwd)
-  - export PATH=$PATH:/usr/lib/chromium-browser/
 
 # command to run the actual booking
 script:
