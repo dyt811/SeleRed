@@ -2,26 +2,31 @@ language: python
 
 python:
   - "3.7"
-env:
-  global:
-    - MOZ_HEADLESS=1
 addons:
-  firefox: latest
+  chrome: stable
+  apt:
+    packages:
+      - chromium-chromedriver
 # command to install dependencies
-before_install:
-  - sudo apt-get install xvfb
-  - wget https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-linux64.tar.gz
+before-install:
+  - "export DISPLAY=99:0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3
+
 install:
-  - sudo tar -xzf geckodriver-v0.19.0-linux64.tar.gz -C /usr/bin
-  - sudo chmod a+x /usr/bin/geckodriver
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
-  - sleep 5 # give xvfb some time to start
+  - wget -N https://chromedriver.storage.googleapis.com/79.0.3945.16/chromedriver_linux64.zip -P ~/
+  - unzip ~/chromedriver_linux64.zip -d ~/
+  - rm ~/chromedriver_linux64.zip
+  - sudo mv -f ~/chromedriver /usr/local/share/
+  - sudo chmod +x /usr/local/share/chromedriver
+  - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
   - pip install -r requirements.txt
   - export PATH=$PATH:$(pwd)
 
 # command to run the actual booking
 script:
+  - whereis google-chrome-stable
+  - whereis chromedriver
   - python YMCA_booking.py
 
 # After successful test, run coverage and send data to Coverall

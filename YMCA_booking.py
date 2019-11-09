@@ -50,7 +50,7 @@ class AutomateBooking:
 
         self.driver: webdriver = None
         if "TRAVIS" in os.environ:
-            self.PrepareTravisFireFoxDriver()
+            self.PrepareTravisDriver()
         elif "firefox" in str(self.path_binary).lower():
             self.PrepareFirefoxDriver()
         elif "chrome" in str(self.path_binary).lower():
@@ -84,10 +84,8 @@ class AutomateBooking:
         logger.info("Completed the transaction!")
         time.sleep(3)
 
-    def PrepareTravisFireFoxDriver(self):
-        options = Options()
-        options.add_argument('-headless')
-        self.driver = Firefox(firefox_options=options)
+    def PrepareTravisDriver(self):
+        self.driver = webdriver.Chrome()
 
     def PrepareChromeDriver(self):
         """
