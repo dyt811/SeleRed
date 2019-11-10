@@ -9,15 +9,17 @@ import time
 from datetime import datetime
 from dotenv import load_dotenv
 from pathlib import Path
-import os
-import logging
+import sys, os, logging
+from UpdateFacebookGroup import UpdateMessageToFacebook
 
 url_signin = "https://inscription.ymcaquebec.org/MyAccount/MyAccountUserLogin.asp?Referrer=&amp;AjaxRequest=true"
 url_booking = "https://inscription.ymcaquebec.org/Facilities/FacilitiesSearchWizard.asp"
-working_days = ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+working_days = ["Tuesday", "Thursday"]
 
 load_dotenv(verbose=True)
 logger = logging.getLogger()
+logger.addHandler(logging.StreamHandler())
+logger.addHandler(logging.StreamHandler(sys.stdout))
 logging.basicConfig(level=logging.INFO)
 
 class AutomateBooking:
@@ -67,6 +69,7 @@ class AutomateBooking:
 
         if book == 1:
             self.CompleteTransaction()
+            UpdateMessageToFacebook(f"YMCA Stanley {self.updateMessage} Booked automatically on {datetime.now().isoformat()}, courtesy of SeleRed. :D")
         elif book == 0:
             logger.info("Mock completing transaction for debugging purposes!")
         else:
@@ -259,7 +262,7 @@ class AutomateBooking:
 
         self.driver.get(url_booking)
         time.sleep(5)  ## to get for loaded completly
-
+        self.updateMessage: str
         self.Select_BookingSearch()
         self.Select_FacilityFunction()
         self.Select_Location()
@@ -271,6 +274,7 @@ class AutomateBooking:
             self.Select_Saturday()
             self.Select_SaturdayTime()
         self.driver.find_element_by_name("Form_Criteria_Panel").submit()
+
         logger.info("Search action complete!")
         time.sleep(3)
 
@@ -284,7 +288,10 @@ class AutomateBooking:
 
         table = soup.find('table', attrs={'id': 'fac-search-results'})
         if table is None:
-            raise PermissionError("It seems there are no known court availabilities. All courts might have been booked!! How?")
+            message = "It seems there are no known court availabilities. All courts might have been booked!! How?"
+            self.updateMessage = message
+            UpdateMessageToFacebook(self.updateMessage)
+            raise PermissionError(message)
 
 
         table_body = table.find('tbody')
@@ -300,11 +307,11 @@ class AutomateBooking:
                     thursdayCourt = cols[6].find('input').get('name')
                     break
             logger.info(thursdayCourt)
+            self.updateMessage = f"Thursday Court {thursdayCourt}"
             logger.info("Thursday search complete!")
             if (thursdayCourt != ''):
                 select_court = self.driver.find_element_by_id(thursdayCourt)
                 select_court.click()
-
 
         elif self.today_weekDay in ["Thursday", "Friday"]:
             saturdayCourt = ''
@@ -314,15 +321,18 @@ class AutomateBooking:
                 if (cols[2].find(text=True) == 'Sat' and cols[4].find(text=True) == '18:30-19:30'):
                     saturdayCourt = cols[6].find('input').get('name')
                     break
-            print(saturdayCourt)
+            logger.info(saturdayCourt)
+            self.updateMessage = f"Saturday Court {saturdayCourt}"
             logger.info("Saturday search complete!")
             if (saturdayCourt != ''):
                 select_court = self.driver.find_element_by_id(saturdayCourt)
                 select_court.click()
+        else:
+            raise ValueError("Results were not processed properly. Possible website changes")
 
         time.sleep(5)
         self.driver.find_element_by_id('AddBookTop').click()
-        logger.info("Add booking to card complete!")
+        logger.info("Add booking to cart complete!")
         time.sleep(5)
 
 if __name__=="__main__":
