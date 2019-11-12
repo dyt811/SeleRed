@@ -35,7 +35,7 @@ class AutomateBooking:
         logger.debug("Main program path begings.")
         # If on travis, .travis.yml already took care of the dependency.
         if "TRAVIS" in os.environ:
-            self.path_binary = Path(r"/usr/bin/chromedriver")
+            self.path_binary = Path(r"/usr/bin/google-chrome-stable")
             assert self.path_binary.exists()
         else:
             self.path_binary = Path(os.getenv("browser_path"))
@@ -104,6 +104,11 @@ class AutomateBooking:
         chrome_options = Options()
         chrome_options.binary_location = str(self.path_binary)
         chrome_options.headless = True
+        chrome_options.add_argument("--no-sandbox")  # This make Chromium reachable
+        chrome_options.add_argument("--no-default-browser-check")  # Overrides default choices
+        chrome_options.add_argument("--no-first-run")
+        chrome_options.add_argument("--disable-default-apps")
+
         self.driver = webdriver.Chrome(options=chrome_options)
 
     def PrepareChromeDriver(self):
