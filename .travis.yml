@@ -26,7 +26,10 @@ install:
 # command to run the actual booking
 script:
   - whereis google-chrome-stable
+  - google-chrome-stable --version
+  - google-chrome --version
   - whereis chromedriver
+  - chromedriver --version
   - python YMCA_booking.py
 
 # After successful test, run coverage and send data to Coverall
