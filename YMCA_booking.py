@@ -102,7 +102,7 @@ class AutomateBooking:
 
     def PrepareTravisDriver(self):
         chrome_options = Options()
-        chrome_options.binary_location = self.path_binary
+        chrome_options.binary_location = str(self.path_binary)
         chrome_options.headless = True
         self.driver = webdriver.Chrome(options=chrome_options)
 
