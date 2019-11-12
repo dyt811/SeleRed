@@ -7,12 +7,7 @@ addons:
   apt:
     packages:
       - chromium-chromedriver
-# command to install dependencies
-before-install:
-  - "export DISPLAY=99:0"
-  - "sh -e /etc/init.d/xvfb start"
-  - sleep 3
-
+      - 
 install:
   - pip install -r requirements.txt
   - export PATH=$PATH:$(pwd)
