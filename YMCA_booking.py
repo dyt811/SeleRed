@@ -16,7 +16,7 @@ url_signin = "https://inscription.ymcaquebec.org/MyAccount/MyAccountUserLogin.as
 url_booking = "https://inscription.ymcaquebec.org/Facilities/FacilitiesSearchWizard.asp"
 working_days = ["Tuesday", "Thursday"]
 
-load_dotenv(verbose=True)
+load_dotenv()
 import sentry_sdk
 sentry_URL = os.getenv("SentryURL")
 sentry_sdk.init()
@@ -102,10 +102,8 @@ class AutomateBooking:
     def PrepareTravisDriver(self):
         chrome_options = Options()
         chrome_options.binary_location = "/usr/bin/google-chrome-stable"
-        #chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--headless')
-        #chrome_options.add_argument('--disable-dev-shm-usage')
-        self.driver = webdriver.Chrome(chrome_options=chrome_options)
+        self.driver = webdriver.Chrome(options=chrome_options)
 
     def PrepareChromeDriver(self):
         """
