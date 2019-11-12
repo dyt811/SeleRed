@@ -35,7 +35,7 @@ class AutomateBooking:
         logger.debug("Main program path begings.")
         # If on travis, .travis.yml already took care of the dependency.
         if "TRAVIS" in os.environ:
-            self.path_binary = Path(r"/usr/local/bin/chromedriver")
+            self.path_binary = Path(r"/usr/bin/chromedriver")
             assert self.path_binary.exists()
         else:
             self.path_binary = Path(os.getenv("browser_path"))
