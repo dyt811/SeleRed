@@ -17,10 +17,14 @@ url_booking = "https://inscription.ymcaquebec.org/Facilities/FacilitiesSearchWiz
 working_days = ["Tuesday", "Thursday"]
 
 load_dotenv(verbose=True)
+import sentry_sdk
+sentry_URL = os.getenv("SentryURL")
+sentry_sdk.init()
+
 logger = logging.getLogger()
 logger.addHandler(logging.StreamHandler())
 logger.addHandler(logging.StreamHandler(sys.stdout))
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 class AutomateBooking:
 
@@ -47,31 +51,39 @@ class AutomateBooking:
 
         # Data check.
         if self.today_weekDay not in working_days:
-            print("This app only runs between Tuesday and Saturday to grab the first spot of YMCA courts.")
+            logger.warning("This app only runs between Tuesday and Saturday to grab the first spot of YMCA courts.")
             return
 
         self.driver: webdriver = None
         if "TRAVIS" in os.environ:
+            logger.debug("TravisCI environment encountered.")
             self.PrepareTravisDriver()
         elif "firefox" in str(self.path_binary).lower():
+            logger.debug("Firefox environment encountered.")
             self.PrepareFirefoxDriver()
         elif "chrome" in str(self.path_binary).lower():
+            logger.debug("Chrome Driver environment encountered.")
             self.PrepareChromeDriver()
         else:
-            raise ValueError("Binary path does not contain firefox OR Chrome!")
+            message = "Binary path does not contain firefox OR Chrome!"
+            logger.critical(message)
+            raise ValueError(message)
         
         self.driver.maximize_window()
         self.SignIn()
         self.InitiateSearch()
         self.ProcessResults()
         self.GoToCheckOut()
-        book = int(os.getenv("CompleteTransaction"))
-
-        if book == 1:
+        CompleteTransaction = int(os.getenv("CompleteTransaction"))
+        logger.debug(f"CompleteTransaction Variable is Given as:{CompleteTransaction}")
+        if CompleteTransaction == 1:
             self.CompleteTransaction()
-            UpdateMessageToFacebook(f"YMCA Stanley {self.updateMessage} Booked automatically on {datetime.now().isoformat()}, courtesy of SeleRed. :D")
-        elif book == 0:
-            logger.info("Mock completing transaction for debugging purposes!")
+            message = f"YMCA Stanley {self.updateMessage} Booked automatically on {datetime.now().isoformat()}, courtesy of SeleRed. :D"
+            logger.debug("Booking completed: posting the following message to facebook:")
+            logger.info(message)
+            UpdateMessageToFacebook(message)
+        elif CompleteTransaction == 0:
+            logger.warning("Mock completing transaction for debugging purposes!")
         else:
             logger.critical("Unreachable code detected. OS ENV variable CompleteTransaction may not have been set in the TravisCI test environment, or the HerokuApplication.")
 
@@ -79,12 +91,12 @@ class AutomateBooking:
 
     def GoToCheckOut(self):
         self.driver.find_element_by_xpath('//*[@title="Click to Checkout"]').click()
-        logger.info("Clicked on Checkout!")
+        logger.debug("Clicked on Checkout!")
         time.sleep(3)
 
     def CompleteTransaction(self):
         self.driver.find_element_by_id("completeTransactionButton").click()
-        logger.info("Completed the transaction!")
+        logger.debug("Completed the transaction!")
         time.sleep(3)
 
     def PrepareTravisDriver(self):
@@ -101,7 +113,7 @@ class AutomateBooking:
         :param path_ChromeBinary:
         :return:
         """
-        logger.info(self.path_binary)
+        logger.debug(f"ChromeBinary Path:{self.path_binary}")
         self.driver = webdriver.Chrome(self.path_binary)  # path to chromedriver
 
         time.sleep(5)
@@ -147,6 +159,7 @@ class AutomateBooking:
         """
         field_facility_booking = self.driver.find_element_by_id("search-facbook-radio")
         field_facility_booking.click()
+        logger.info("Selected Search Booking")
 
     def Select_FacilityFunction(self):
         """
@@ -155,18 +168,21 @@ class AutomateBooking:
         try:
             field_facility_function = Select(self.driver.find_element_by_id("FacilityFunctions"))
             field_facility_function.select_by_visible_text('CV Badminton')
-            #which_facility = Select(self.driver.find_element_by_name('FacilityFunctions'))
-            #which_facility.select_by_value('49')
+            # which_facility = Select(self.driver.find_element_by_name('FacilityFunctions'))
+            # which_facility.select_by_value('49')
+            logger.info("Selected Facility Function")
         except StaleElementReferenceException as Exception:
             field_facility_function = Select(self.driver.find_element_by_id("FacilityFunctions"))
             field_facility_function.select_by_visible_text('CV Badminton')
             # which_facility = Select(self.driver.find_element_by_name('FacilityFunctions'))
             # which_facility.select_by_value('49')
+            logger.info("Selected Facility Function Again")
 
     def Select_Location(self):
         # Select Centre-Ville to avoid booking other places.
         field_centre = self.driver.find_element_by_xpath('//*[@title="Centre-ville"]')
         field_centre.click()
+        logger.info("Selected Location: Centre-Ville")
 
     def Select_SetDateRange(self):
         # Select today?
@@ -201,6 +217,7 @@ class AutomateBooking:
 
         to_month = Select(self.driver.find_element_by_name('MonthTo'))
         to_month.select_by_value(str(till_month).lstrip("0"))
+        logger.info(f"Selected DateRange from: {from_month}&{from_day} to {till_month}&{till_date}.")
 
     def Select_Thurday(self):
         """
@@ -208,6 +225,7 @@ class AutomateBooking:
         """
         select_day5 = self.driver.find_element_by_id('chkWeekDay5')
         select_day5.click()
+        logger.info("Selected Thursday")
 
     def Select_Saturday(self):
         """
@@ -215,6 +233,7 @@ class AutomateBooking:
         """
         select_day7 = self.driver.find_element_by_id('chkWeekDay7')
         select_day7.click()
+        logger.info("Selected Saturday")
 
     def Select_ThursdayTime(self):
         """
@@ -234,6 +253,7 @@ class AutomateBooking:
         # Select PM
         AMPMTo = Select(self.driver.find_element_by_name('AMPMFrom'))
         AMPMTo.select_by_value('1')
+        logger.info("Selected from 9PM to 11PM")
 
     def Select_SaturdayTime(self):
         """
@@ -254,6 +274,7 @@ class AutomateBooking:
         # Select PM
         AMPMTo = Select(self.driver.find_element_by_name('AMPMFrom'))
         AMPMTo.select_by_value('1')
+        logger.info("Selected from 6PM to 8PM")
 
     def InitiateSearch(self):
         """
