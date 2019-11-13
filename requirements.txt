@@ -3,3 +3,4 @@ python-dotenv
 selenium
 facebook-sdk
 sentry-sdk
+flask

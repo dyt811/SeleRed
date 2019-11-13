@@ -19,3 +19,6 @@ def UpdateMessageToFacebook(UpdateMessage: str):
     #group_id = groups['data'][0]['id'] # we take the ID of the first group
     # Post message to the Group Feed.
     graph.put_object(GroupID, "feed", message=UpdateMessage)
+
+if __name__=="__main__":
+    UpdateMessageToFacebook("Long live API token testing from SeleRed?")

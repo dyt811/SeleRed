@@ -7,7 +7,6 @@ addons:
   apt:
     packages:
       - chromium-chromedriver
-      - 
 install:
   - pip install -r requirements.txt
   - export PATH=$PATH:$(pwd)

@@ -17,7 +17,7 @@ working_days = ["Tuesday", "Thursday"]
 load_dotenv()
 
 sentry_URL = os.getenv("SentryURL")
-sentry_sdk.init()
+sentry_sdk.init(sentry_URL)
 logging.basicConfig(level=logging.DEBUG)
 
 class AutomateBooking:
