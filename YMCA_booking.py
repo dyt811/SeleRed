@@ -48,11 +48,14 @@ class AutomateBooking:
         if self.today_weekDay not in working_days:
             logging.warning("This app only runs between Tuesday and Saturday to grab the first spot of YMCA courts.")
             return
-
+        # OS.ENVIRON check
         self.driver: webdriver = None
         if "TRAVIS" in os.environ:
             logging.debug("TravisCI environment encountered.")
             self.PrepareTravisDriver()
+        elif 'on_heroku' in os.environ:
+            logging.debug("Heroku App environment encountered.")
+            self.PrepareHeorkuDriver()
         elif "firefox" in str(self.path_binary).lower():
             logging.debug("Firefox environment encountered.")
             self.PrepareFirefoxDriver()
@@ -101,6 +104,21 @@ class AutomateBooking:
         chrome_options.headless = True
         chrome_options.add_argument("--no-sandbox")  # This make Chromium reachable
         self.driver = webdriver.Chrome(options=chrome_options)
+
+    def PrepareHeorkuDriver(self):
+        from selenium.webdriver.chrome.options import Options
+        # Per Source: https://medium.com/@mikelcbrowne/running-chromedriver-with-python-selenium-on-heroku-acc1566d161c
+        GOOGLE_CHROME_PATH = os.getenv("GOOGLE_CHROME_PATH")
+        CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH")
+
+        chrome_options = Options()
+        chrome_options.binary_location = GOOGLE_CHROME_PATH
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--no-sandbox')
+        self.driver = webdriver.Chrome(
+            executable_path=CHROMEDRIVER_PATH,
+            options=chrome_options
+        )
 
     def PrepareChromeDriver(self):
         """
