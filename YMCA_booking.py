@@ -43,6 +43,7 @@ class AutomateBooking:
         self.today_month = self.today.strftime("%m").lstrip("0")
         self.today_year = self.today.strftime("%y")
         self.today_weekDay = self.today.strftime('%A')
+        self.court = None
 
         # Data check.
         if self.today_weekDay not in working_days:
@@ -230,7 +231,7 @@ class AutomateBooking:
 
         to_month = Select(self.driver.find_element_by_name('MonthTo'))
         to_month.select_by_value(str(till_month).lstrip("0"))
-        logging.info(f"Selected DateRange from: {from_month}&{from_day} to {till_month}&{till_date}.")
+        logging.info(f"Selected DateRange from: {self.today_month}-{self.today_day} to {till_month}-{till_date}.")
 
     def Select_Thurday(self):
         """
@@ -340,8 +341,10 @@ class AutomateBooking:
                 if (cols[2].find(text=True) == 'Thu' and cols[4].find(text=True) == '21:10-22:10'):
                     thursdayCourt = cols[6].find('input').get('name')
                     break
-            logging.info(thursdayCourt)
-            self.updateMessage = f"Thursday Court {thursdayCourt}"
+
+            self.court = thursdayCourt[-1]
+            logging.info(self.court)
+            self.updateMessage = f"Thursday Court {self.court}"
             logging.info("Thursday search complete!")
             if (thursdayCourt != ''):
                 select_court = self.driver.find_element_by_id(thursdayCourt)
@@ -355,8 +358,9 @@ class AutomateBooking:
                 if (cols[2].find(text=True) == 'Sat' and cols[4].find(text=True) == '18:30-19:30'):
                     saturdayCourt = cols[6].find('input').get('name')
                     break
-            logging.info(saturdayCourt)
-            self.updateMessage = f"Saturday Court {saturdayCourt}"
+            self.court = saturdayCourt[-1]
+            logging.info(self.court)
+            self.updateMessage = f"Saturday Court {self.court}"
             logging.info("Saturday search complete!")
             if (saturdayCourt != ''):
                 select_court = self.driver.find_element_by_id(saturdayCourt)
