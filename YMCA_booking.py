@@ -5,14 +5,16 @@ from selenium.webdriver.support.ui import Select
 import time
 from datetime import datetime
 from dotenv import load_dotenv
-from pathlib import Path
-import sys, os, logging
-from UpdateFacebookGroup import UpdateMessageToFacebook
+
+
+import os, logging
+from update_facebook_group import UpdateMessageToFacebook
+from prepare_selenv import handle_environment
 import sentry_sdk
 
 url_signin = "https://inscription.ymcaquebec.org/MyAccount/MyAccountUserLogin.asp?Referrer=&amp;AjaxRequest=true"
 url_booking = "https://inscription.ymcaquebec.org/Facilities/FacilitiesSearchWizard.asp"
-working_days = ["Tuesday", "Thursday"]
+working_days = ["Tuesday",  "Wednesday", "Thursday"]
 
 load_dotenv()
 
@@ -23,17 +25,7 @@ logging.basicConfig(level=logging.INFO)
 class AutomateBooking:
 
     def __init__(self):
-        """
-        :param path_binary: Binary to either Chrome self.driver or Firefox.
-        """
-        logging.debug("Main program path begings.")
-        # If on travis, .travis.yml already took care of the dependency.
-        if "TRAVIS" in os.environ:
-            self.path_binary = Path(r"/usr/bin/google-chrome")
-            assert self.path_binary.exists()
-        else:
-            self.path_binary = Path(os.getenv("browser_path"))
-            assert self.path_binary.exists()
+        logging.debug("Main program path begins.")
 
         # Get the current date information:
         self.today = datetime.today()
@@ -49,25 +41,11 @@ class AutomateBooking:
         if self.today_weekDay not in working_days:
             logging.warning("This app only runs between Tuesday and Saturday to grab the first spot of YMCA courts.")
             return
-        # OS.ENVIRON check
-        self.driver: webdriver = None
-        if "TRAVIS" in os.environ:
-            logging.debug("TravisCI environment encountered.")
-            self.PrepareTravisDriver()
-        elif 'on_heroku' in os.environ:
-            logging.debug("Heroku App environment encountered.")
-            self.PrepareHeorkuDriver()
-        elif "firefox" in str(self.path_binary).lower():
-            logging.debug("Firefox environment encountered.")
-            self.PrepareFirefoxDriver()
-        elif "chrome" in str(self.path_binary).lower():
-            logging.debug("Chrome Driver environment encountered.")
-            self.PrepareChromeDriver()
-        else:
-            message = "Binary path does not contain firefox OR Chrome!"
-            logging.critical(message)
-            raise ValueError(message)
-        
+
+        # OS.ENVIRON check to set self.driver
+
+        (self.path_binary, self.driver) = handle_environment()
+
         self.driver.maximize_window()
         self.SignIn()
         self.InitiateSearch()
@@ -88,6 +66,8 @@ class AutomateBooking:
 
         logging.debug("Main program path end reached.")
 
+
+
     def GoToCheckOut(self):
         self.driver.find_element_by_xpath('//*[@title="Click to Checkout"]').click()
         logging.debug("Clicked on Checkout!")
@@ -98,50 +78,7 @@ class AutomateBooking:
         logging.debug("Completed the transaction!")
         time.sleep(3)
 
-    def PrepareTravisDriver(self):
-        from selenium.webdriver.chrome.options import Options
-        chrome_options = Options()
-        chrome_options.binary_location = str(self.path_binary)
-        chrome_options.headless = True
-        chrome_options.add_argument("--no-sandbox")  # This make Chromium reachable
-        self.driver = webdriver.Chrome(options=chrome_options)
 
-    def PrepareHeorkuDriver(self):
-        from selenium.webdriver.chrome.options import Options
-        # Per Source: https://medium.com/@mikelcbrowne/running-chromedriver-with-python-selenium-on-heroku-acc1566d161c
-        GOOGLE_CHROME_PATH = os.getenv("GOOGLE_CHROME_PATH")
-        CHROMEDRIVER_PATH = os.getenv("CHROMEDRIVER_PATH")
-
-        chrome_options = Options()
-        chrome_options.binary_location = GOOGLE_CHROME_PATH
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--no-sandbox')
-        self.driver = webdriver.Chrome(
-            executable_path=CHROMEDRIVER_PATH,
-            options=chrome_options
-        )
-
-    def PrepareChromeDriver(self):
-        """
-        Create a Chrome Session
-        :param path_ChromeBinary:
-        :return:
-        """
-        logging.debug(f"ChromeBinary Path:{self.path_binary}")
-        self.driver = webdriver.Chrome(self.path_binary)  # path to chromedriver
-
-        time.sleep(5)
-
-    def PrepareFirefoxDriver(self):
-        """
-        Create a Firefox Session
-        :param path_FirefoxBinary:
-        :return:
-        """
-        from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-        binary = FirefoxBinary(str(self.path_binary))
-        self.driver = webdriver.Firefox(firefox_binary=binary)
-        time.sleep(5)
 
     def SignIn(self):
         """
