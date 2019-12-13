@@ -220,12 +220,12 @@ class AutomateBooking:
         AMPMFrom.select_by_value('1')
 
         TimeTo = Select(self.driver.find_element_by_name('TimeTo'))
-        TimeTo.select_by_value('8')
+        TimeTo.select_by_value('7')
 
         # Select PM
         AMPMTo = Select(self.driver.find_element_by_name('AMPMFrom'))
         AMPMTo.select_by_value('1')
-        logging.info("Selected from 6PM to 8PM")
+        logging.info("Selected from 6PM to 7PM")
 
     def InitiateSearch(self):
         """
