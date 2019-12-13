@@ -14,7 +14,7 @@ import sentry_sdk
 
 url_signin = "https://inscription.ymcaquebec.org/MyAccount/MyAccountUserLogin.asp?Referrer=&amp;AjaxRequest=true"
 url_booking = "https://inscription.ymcaquebec.org/Facilities/FacilitiesSearchWizard.asp"
-working_days = ["Tuesday",  "Wednesday", "Thursday"]
+working_days = ["Tuesday",  "Wednesday", "Thursday", "Friday"]
 
 load_dotenv()
 
